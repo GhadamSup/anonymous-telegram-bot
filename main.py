@@ -27,14 +27,21 @@ class AnonymousBridgeBot:
         admin_handler = AdminHandler()
         reply_handler = ReplyHandler()
         
+        # Set bot reference in admin handler for restart/stop
+        admin_handler.set_bot(self)
+        
         # Command handlers
         self.app.add_handler(CommandHandler("start", start_handler.handle))
         self.app.add_handler(CommandHandler("stop", start_handler.stop))
         self.app.add_handler(CommandHandler("cancel", start_handler.cancel))
         self.app.add_handler(CommandHandler("admin", admin_handler.show_panel))
         
-        # Callback handlers
+        # Callback handlers - ORDER MATTERS! More specific patterns first
+        # Handle reply callbacks
         self.app.add_handler(CallbackQueryHandler(reply_handler.handle, pattern="^reply_"))
+        # Handle channel verification
+        self.app.add_handler(CallbackQueryHandler(reply_handler.handle, pattern="^verify_channels"))
+        # Handle admin callbacks
         self.app.add_handler(CallbackQueryHandler(admin_handler.handle_button, pattern="^admin_"))
         
         # Message handlers
@@ -47,7 +54,23 @@ class AnonymousBridgeBot:
     async def _error_handler(self, update, context):
         logger.error(f"Update {update} caused error {context.error}")
     
+    def stop_bot(self):
+        """Stop the bot gracefully"""
+        logger.info("Stopping bot...")
+        if self.app.running:
+            self.app.stop_running()
+    
+    def restart_bot(self):
+        """Restart the bot"""
+        logger.info("Restarting bot...")
+        import sys
+        import os
+        python = sys.executable
+        script = settings.SCRIPT_PATH
+        os.execv(python, [python, script])
+    
     def run(self):
+        """Start the bot"""
         logger.info("Starting bot...")
         self.app.run_polling()
 
