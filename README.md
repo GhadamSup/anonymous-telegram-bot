@@ -431,10 +431,4 @@ You are free to use, modify, and distribute it according to your needs.
 
 ---
 
-## Repository
-
-:contentReference[oaicite:0]{index=0}
-
----
-
 Built with ❤️ using Python and Telegram Bot API.
