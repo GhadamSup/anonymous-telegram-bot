@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup 2FA - Bot Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <h2>🔐 Setup Two-Factor Authentication</h2>
+            <p>Scan this QR code with Google Authenticator or any TOTP app</p>
+            
+            <div class="qr-container">
+                <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code">
+            </div>
+            
+            <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px;">Or enter this code manually:</p>
+            <div class="secret-key">{{ secret }}</div>
+            
+            <div class="steps">
+                <ol>
+                    <li><span>Open Google Authenticator</span></li>
+                    <li><span>Tap + and scan QR code</span></li>
+                    <li><span>Enter the 6-digit code below to verify</span></li>
+                </ol>
+            </div>
+            
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            
+            <form method="POST" action="/setup-2fa">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="form-group">
+                    <input type="text" name="code" class="input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autofocus style="text-align:center;font-size:24px;letter-spacing:8px;">
+                </div>
+                <input type="hidden" name="secret" value="{{ secret }}">
+                <button type="submit" class="btn btn-primary">Verify & Enable 2FA</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

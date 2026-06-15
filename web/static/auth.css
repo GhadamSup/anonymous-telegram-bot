@@ -1,0 +1,150 @@
+:root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --border: #222222;
+    --border-light: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #888888;
+    --text-tertiary: #555555;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card .logo { text-align: center; margin-bottom: 32px; }
+.auth-card .logo .icon { font-size: 48px; margin-bottom: 12px; }
+.auth-card .logo h2 { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+.auth-card .logo p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+
+.error-msg {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.form-group { margin-bottom: 20px; }
+
+.label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+}
+
+.input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--border-light);
+}
+
+.btn {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: var(--transition);
+    font-family: inherit;
+    width: 100%;
+}
+
+.btn-primary { background: #fff; color: #000; border-color: #fff; }
+.btn-primary:hover { background: #e5e5e5; }
+
+.twofa-input {
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 12px;
+    font-family: monospace;
+}
+
+.password-requirements {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.password-requirements ul { list-style: none; padding: 0; }
+.password-requirements ul li { padding-left: 16px; position: relative; }
+.password-requirements ul li::before { content: '•'; position: absolute; left: 0; color: var(--text-tertiary); }
+
+.qr-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.qr-container img { display: block; max-width: 200px; }
+
+.secret-key {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 16px;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+    word-break: break-all;
+    user-select: all;
+    color: var(--text);
+}
+
+.steps { text-align: left; margin-bottom: 24px; }
+.steps ol { padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 2; }
+.steps ol li span { color: var(--text); }
+
+.setup-container { max-width: 500px; width: 100%; }
+.setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; }
+.setup-card h2 { font-size: 24px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+.setup-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }

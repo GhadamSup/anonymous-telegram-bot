@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Overview of your bot's performance</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Total Users</span>
+            <span class="stat-icon">👥</span>
+        </div>
+        <div class="stat-value" id="totalUsers">-</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Total Messages</span>
+            <span class="stat-icon">💬</span>
+        </div>
+        <div class="stat-value" id="totalMessages">-</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Active Chats</span>
+            <span class="stat-icon">🟢</span>
+        </div>
+        <div class="stat-value" id="activeChats">-</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Banned Users</span>
+            <span class="stat-icon">🚫</span>
+        </div>
+        <div class="stat-value" id="bannedUsers">-</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+    <div class="card">
+        <div class="card-header">
+            <h2>Messages (7 Days)</h2>
+        </div>
+        <div style="padding: 20px;">
+            <canvas id="messagesChart" height="200"></canvas>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Message Types</h2>
+        </div>
+        <div style="padding: 20px;">
+            <canvas id="typesChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div class="card">
+        <div class="card-header">
+            <h2>System Resources</h2>
+        </div>
+        <div style="padding: 20px;">
+            <div style="margin-bottom: 16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+                    <span>CPU</span><span id="cpuVal">-</span>
+                </div>
+                <div style="height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;">
+                    <div id="cpuBar" style="height:100%;background:#fff;border-radius:4px;transition:width 0.5s;width:0%"></div>
+                </div>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+                    <span>RAM</span><span id="ramVal">-</span>
+                </div>
+                <div style="height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;">
+                    <div id="ramBar" style="height:100%;background:#fff;border-radius:4px;transition:width 0.5s;width:0%"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+                    <span>Disk</span><span id="diskVal">-</span>
+                </div>
+                <div style="height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;">
+                    <div id="diskBar" style="height:100%;background:#fff;border-radius:4px;transition:width 0.5s;width:0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>User Growth (30 Days)</h2>
+        </div>
+        <div style="padding: 20px;">
+            <canvas id="usersChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let messagesChart, typesChart, usersChart;
+const gridColor = 'rgba(255,255,255,0.04)';
+const textColor = '#555555';
+
+function createCharts() {
+    const msgCtx = document.getElementById('messagesChart').getContext('2d');
+    messagesChart = new Chart(msgCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Messages',
+                data: [],
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#000000',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+                y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: true }
+            }
+        }
+    });
+    
+    const typesCtx = document.getElementById('typesChart').getContext('2d');
+    typesChart = new Chart(typesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Text', 'Media', 'Replies'],
+            datasets: [{
+                data: [1, 1, 1],
+                backgroundColor: ['#ffffff', '#555555', '#222222'],
+                borderColor: '#000000',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#888888', padding: 16, font: { size: 11 }, usePointStyle: true }
+                }
+            }
+        }
+    });
+    
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    usersChart = new Chart(usersCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'New Users',
+                data: [],
+                backgroundColor: '#ffffff',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
+                y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: true }
+            }
+        }
+    });
+}
+
+async function loadStats() {
+    try {
+        // Get live stats
+        const data = await apiCall('/api/stats');
+        document.getElementById('totalUsers').textContent = data.users?.total_users || 0;
+        document.getElementById('totalMessages').textContent = data.conversations?.total_messages || 0;
+        document.getElementById('activeChats').textContent = data.users?.active_chats || 0;
+        document.getElementById('bannedUsers').textContent = data.users?.banned_users || 0;
+        
+        // System bars
+        const cpu = data.system?.cpu?.percent || 0;
+        const ram = data.system?.memory?.percent || 0;
+        const disk = data.system?.disk?.percent || 0;
+        document.getElementById('cpuVal').textContent = cpu + '%';
+        document.getElementById('ramVal').textContent = ram + '%';
+        document.getElementById('diskVal').textContent = disk + '%';
+        document.getElementById('cpuBar').style.width = cpu + '%';
+        document.getElementById('ramBar').style.width = ram + '%';
+        document.getElementById('diskBar').style.width = disk + '%';
+        
+        // Message types chart
+        const types = await apiCall('/api/stats/message-types');
+        typesChart.data.datasets[0].data = [
+            Math.max(types.text || 0, 1),
+            Math.max(types.media || 0, 1),
+            Math.max(types.replies || 0, 1)
+        ];
+        typesChart.update();
+        
+        // Daily stats (7 days)
+        const daily = await apiCall('/api/stats/daily?days=7');
+        if (daily && daily.length) {
+            messagesChart.data.labels = daily.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
+            });
+            messagesChart.data.datasets[0].data = daily.map(d => d.total_messages || 0);
+            messagesChart.update();
+            
+            // User growth (use new_users from daily stats)
+            usersChart.data.labels = daily.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+            });
+            usersChart.data.datasets[0].data = daily.map(d => d.new_users || 0);
+            usersChart.update();
+        }
+        
+    } catch(e) {
+        console.error('Stats error:', e);
+    }
+}
+
+createCharts();
+loadStats();
+setInterval(loadStats, 30000);
+</script>
+{% endblock %}

@@ -1,21 +1,18 @@
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# Environment variables (contains your bot token!)
+# Environment
 .env
-
-# Database files
 *.db
 *.db-journal
 
+# Credentials
+admin_credentials.txt
+2fa_secret.txt
+
 # Python
+venv/
+env/
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
+*.pyo
 
 # IDE
 .vscode/
@@ -25,9 +22,42 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# CSV exports (generated files)
+# Exports
 *.csv
 *.json
 
 # Logs
 *.log
+
+
+# Environment
+.env
+*.db
+*.db-journal
+
+# Audit logs
+audit.log
+
+# Credentials (now in database, but just in case)
+admin_credentials.txt
+2fa_secret.txt
+
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Exports
+*.csv
+*.json

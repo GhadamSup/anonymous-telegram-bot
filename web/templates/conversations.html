@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Conversations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Conversations</h1>
+    <p>Browse all chat conversations</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>All Conversations</h2>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Users</th>
+                    <th>Messages</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="convosTable">
+                <tr><td colspan="5"><div class="loading"><div class="loader"></div>Loading...</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="messagesModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Messages</h2>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="messagesContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadConversations() {
+    try {
+        const data = await apiCall('/api/conversations');
+        const convos = data.conversations || data;
+        const tbody = document.getElementById('convosTable');
+        
+        if (!convos.length) {
+            tbody.innerHTML = '<tr><td colspan="5"><div class="loading">No conversations</div></td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = convos.map(c => `
+            <tr>
+                <td><span style="color:var(--text-tertiary)">#${c.id}</span></td>
+                <td>${c.user_a_name || '?'} ↔ ${c.user_b_name || '?'}</td>
+                <td>${c.total_messages || c.message_count || 0}</td>
+                <td>
+                    ${c.status === 'active' ? 
+                        '<span class="badge badge-success"><span class="badge-dot green"></span>Active</span>' : 
+                        '<span class="badge badge-neutral">Ended</span>'}
+                </td>
+                <td>
+                    <button class="btn btn-sm" onclick="viewMessages(${c.id})">View</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        document.getElementById('convosTable').innerHTML = '<tr><td colspan="5"><div class="loading">Failed to load</div></td></tr>';
+    }
+}
+
+async function viewMessages(convId) {
+    const messages = await apiCall(`/api/conversations/${convId}/messages`);
+    const content = document.getElementById('messagesContent');
+    
+    content.innerHTML = messages.map(m => `
+        <div class="msg">
+            <div class="msg-header">
+                <span class="msg-sender">${m.sender_name || 'Unknown'}</span>
+                <span class="msg-time">${m.timestamp || ''}</span>
+            </div>
+            <div class="msg-body">${m.content || m.caption || '[' + (m.message_type || 'media') + ']'}</div>
+        </div>
+    `).join('');
+    
+    document.getElementById('messagesModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('messagesModal').classList.remove('active');
+}
+
+loadConversations();
+</script>
+{% endblock %}

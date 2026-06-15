@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Broadcast{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Broadcast</h1>
+    <p>Send messages to all users</p>
+</div>
+
+<div class="card" style="max-width:600px">
+    <div class="card-header">
+        <h2>New Broadcast</h2>
+    </div>
+    <div style="padding:24px">
+        <div class="form-group">
+            <label class="label">Message</label>
+            <textarea class="input" id="broadcastMsg" rows="5" placeholder="Type your message..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="sendBroadcast()" style="width:100%">Send Broadcast</button>
+        <div id="broadcastResult" style="margin-top:16px"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function sendBroadcast() {
+    const message = document.getElementById('broadcastMsg').value;
+    if (!message) return showToast('Enter a message');
+    if (!confirm('Send to all users?')) return;
+    
+    const result = await apiCall('/api/broadcast', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message})
+    });
+    
+    const div = document.getElementById('broadcastResult');
+    if (result.success) {
+        div.innerHTML = `<span class="badge badge-success">Sent: ${result.sent} | Failed: ${result.failed}</span>`;
+        showToast('Broadcast sent!');
+    } else {
+        div.innerHTML = `<span class="badge badge-danger">${result.error}</span>`;
+    }
+}
+</script>
+{% endblock %}
