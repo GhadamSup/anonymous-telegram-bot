@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bot Admin{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">🤖 Bot Admin</div>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+    
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="bot-name">
+                <span class="logo-icon">🤖</span>
+                Bot Admin
+            </div>
+            <div class="bot-status">
+                <span class="status-dot" style="background:#22c55e;"></span>
+                <span style="color:#22c55e;">System Online</span>
+            </div>
+        </div>
+        
+        <div class="sidebar-nav">
+            <span class="nav-label">Overview</span>
+            <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            
+            <span class="nav-label">Management</span>
+            <a href="/users" class="{% if request.path == '/users' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">👥</span> Users
+            </a>
+            <a href="/conversations" class="{% if request.path == '/conversations' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">💬</span> Conversations
+            </a>
+            <a href="/channels" class="{% if request.path == '/channels' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">📢</span> Channels
+            </a>
+            
+            <span class="nav-label">Tools</span>
+            <a href="/broadcast" class="{% if request.path == '/broadcast' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">📣</span> Broadcast
+            </a>
+            <a href="/settings" class="{% if request.path == '/settings' %}active{% endif %}" onclick="closeSidebar()">
+                <span class="nav-icon">⚙️</span> Settings
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <a href="/logout" onclick="return confirm('Logout?')">
+                <span class="nav-icon">🚪</span> Logout
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script>
+        const API_BASE = '';
+        
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(API_BASE + url, options);
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json();
+                }
+                return response;
+            } catch (e) {
+                showToast('Connection error');
+                throw e;
+            }
+        }
+        
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        }
+        
+        function closeSidebar() {
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+        
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

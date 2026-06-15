@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Channels{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Channels</h1>
+    <p>Manage sponsored channels</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Sponsored Channels</h2>
+        <button class="btn btn-primary btn-sm" onclick="showAddChannel()">+ Add Channel</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="channelsTable">
+                <tr><td colspan="3"><div class="loading"><div class="loader"></div>Loading...</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="addChannelModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Channel</h2>
+            <button class="modal-close" onclick="closeAddModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="label">Invite Link</label>
+                <input type="text" class="input" id="channelLink" placeholder="https://t.me/...">
+            </div>
+            <button class="btn btn-primary" onclick="addChannel()" style="width:100%">Add Channel</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .actions-cell {
+        display: flex;
+        gap: 6px;
+        flex-wrap: nowrap;
+    }
+    
+    @media (max-width: 768px) {
+        .actions-cell {
+            flex-direction: column;
+            gap: 4px;
+        }
+        .actions-cell .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadChannels() {
+    try {
+        const channels = await apiCall('/api/channels');
+        const tbody = document.getElementById('channelsTable');
+        
+        if (!channels.length) {
+            tbody.innerHTML = '<tr><td colspan="3"><div class="loading">No channels added</div></td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = channels.map(c => `
+            <tr>
+                <td>
+                    <div style="font-weight:600">${c.channel_title || 'Channel'}</div>
+                    <div style="font-size:12px;color:var(--text-tertiary)">${c.channel_username ? '@' + c.channel_username : 'ID: ' + c.channel_id}</div>
+                </td>
+                <td>
+                    ${c.is_active ? 
+                        '<span class="badge badge-success"><span class="badge-dot green"></span>Active</span>' : 
+                        '<span class="badge badge-danger"><span class="badge-dot red"></span>Inactive</span>'}
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn btn-sm" onclick="toggleChannel(${c.channel_id})">
+                            ${c.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="removeChannel(${c.channel_id})">Remove</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        document.getElementById('channelsTable').innerHTML = '<tr><td colspan="3"><div class="loading">Failed to load</div></td></tr>';
+    }
+}
+
+function showAddChannel() {
+    document.getElementById('addChannelModal').classList.add('active');
+}
+
+function closeAddModal() {
+    document.getElementById('addChannelModal').classList.remove('active');
+}
+
+async function addChannel() {
+    const link = document.getElementById('channelLink').value;
+    if (!link) return showToast('Please enter a link');
+    
+    const result = await apiCall('/api/channels/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({link})
+    });
+    
+    if (result.success) {
+        showToast('Channel added!');
+        closeAddModal();
+        loadChannels();
+    } else {
+        showToast(result.error || 'Failed to add channel');
+    }
+}
+
+async function toggleChannel(id) {
+    await apiCall(`/api/channels/${id}/toggle`, { method: 'POST' });
+    loadChannels();
+}
+
+async function removeChannel(id) {
+    if (!confirm('Remove this channel?')) return;
+    await apiCall(`/api/channels/${id}/remove`, { method: 'DELETE' });
+    showToast('Channel removed');
+    loadChannels();
+}
+
+loadChannels();
+</script>
+{% endblock %}

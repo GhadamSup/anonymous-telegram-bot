@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Settings</h1>
+    <p>Bot controls & data export</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Bot Control</span>
+            <span class="stat-icon">🤖</span>
+        </div>
+        <button class="btn btn-sm" onclick="restartBot()" style="margin-top:12px;width:100%">🔄 Restart Bot</button>
+        <button class="btn btn-danger btn-sm" onclick="stopBot()" style="margin-top:8px;width:100%">🛑 Stop Bot</button>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Export Data</span>
+            <span class="stat-icon">📥</span>
+        </div>
+        <a href="/api/export/users" class="btn btn-sm" style="margin-top:12px;width:100%;text-align:center">📋 Users (CSV)</a>
+        <a href="/api/export/messages" class="btn btn-sm" style="margin-top:8px;width:100%;text-align:center">💬 Messages (JSON)</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function restartBot() {
+    if (!confirm('Restart the bot?')) return;
+    const result = await apiCall('/api/bot/restart', { method: 'POST' });
+    showToast(result.message || 'Restarting...');
+}
+
+async function stopBot() {
+    if (!confirm('STOP the bot? This cannot be undone from web!')) return;
+    const result = await apiCall('/api/bot/stop', { method: 'POST' });
+    showToast(result.message || 'Stopping...');
+}
+</script>
+{% endblock %}

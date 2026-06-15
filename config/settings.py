@@ -14,7 +14,6 @@ class Settings:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     
-    # Bot control
-    SCRIPT_PATH = sys.argv[0]  # Path to main script for restart
+    SCRIPT_PATH = sys.argv[0]
 
 settings = Settings()

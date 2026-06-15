@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Users</h1>
+    <p>Manage your bot users</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>All Users</h2>
+        <div class="search-wrapper">
+            <span>🔍</span>
+            <input type="text" class="search-input" placeholder="Search users..." oninput="filterUsers(this.value)">
+        </div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                <tr><td colspan="4"><div class="loading"><div class="loader"></div>Loading users...</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allUsers = [];
+
+async function loadUsers() {
+    try {
+        allUsers = await apiCall('/api/users');
+        renderUsers(allUsers);
+    } catch(e) {
+        document.getElementById('usersTable').innerHTML = '<tr><td colspan="4"><div class="loading">Failed to load users</div></td></tr>';
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('usersTable');
+    
+    if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="loading">No users found</div></td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar">${(u.first_name || '?')[0].toUpperCase()}</div>
+                    <div>
+                        <div style="font-weight:600">${u.first_name || 'Unknown'} ${u.last_name || ''}</div>
+                        <div style="font-size:12px;color:var(--text-tertiary)">ID: ${u.user_id}</div>
+                    </div>
+                </div>
+            </td>
+            <td>${u.username ? '@' + u.username : '<span style="color:var(--text-tertiary)">N/A</span>'}</td>
+            <td>
+                ${u.is_banned ? 
+                    '<span class="badge badge-danger"><span class="badge-dot red"></span>Banned</span>' : 
+                    '<span class="badge badge-success"><span class="badge-dot green"></span>Active</span>'}
+            </td>
+            <td>
+                ${u.is_banned ?
+                    `<button class="btn btn-success btn-xs" onclick="unbanUser(${u.user_id})">Unban</button>` :
+                    `<button class="btn btn-danger btn-xs" onclick="banUser(${u.user_id})">Ban</button>`
+                }
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filterUsers(query) {
+    const q = query.toLowerCase();
+    const filtered = allUsers.filter(u => 
+        String(u.user_id).includes(q) ||
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.first_name && u.first_name.toLowerCase().includes(q)) ||
+        (u.full_name && u.full_name.toLowerCase().includes(q))
+    );
+    renderUsers(filtered);
+}
+
+async function banUser(id) {
+    if (!confirm('Ban this user?')) return;
+    await apiCall(`/api/users/${id}/ban`, { method: 'POST' });
+    showToast('User banned');
+    loadUsers();
+}
+
+async function unbanUser(id) {
+    if (!confirm('Unban this user?')) return;
+    await apiCall(`/api/users/${id}/unban`, { method: 'POST' });
+    showToast('User unbanned');
+    loadUsers();
+}
+
+loadUsers();
+</script>
+{% endblock %}

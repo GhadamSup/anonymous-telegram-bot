@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+<style>
+    .sidebar, .topbar { display: none !important; }
+    .main-content { margin-left: 0 !important; padding: 20px !important; width: 100%; max-width: 420px; display: flex; align-items: center; min-height: 100vh; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="logo">
+        <div class="icon">🤖</div>
+        <h2>Bot Admin</h2>
+        <p>Sign in to manage your bot</p>
+        {% if require_2fa %}
+        <p style="color:#f59e0b;font-size:12px;margin-top:8px;">🔐 2FA is enabled</p>
+        {% endif %}
+    </div>
+    
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+    
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-group">
+            <label class="label">Username</label>
+            <input type="text" name="username" class="input" placeholder="Enter username" required autofocus>
+        </div>
+        <div class="form-group">
+            <label class="label">Password</label>
+            <input type="password" name="password" class="input" placeholder="Enter password" required>
+        </div>
+        {% if require_2fa %}
+        <div class="form-group">
+            <label class="label">2FA Code</label>
+            <input type="text" name="code" class="input twofa-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Sign In</button>
+    </form>
+</div>
+{% endblock %}

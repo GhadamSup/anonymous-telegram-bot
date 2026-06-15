@@ -82,6 +82,31 @@ class DatabaseConnection:
                 added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             
+            CREATE TABLE IF NOT EXISTS daily_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT UNIQUE NOT NULL,
+                total_users INTEGER DEFAULT 0,
+                new_users INTEGER DEFAULT 0,
+                total_messages INTEGER DEFAULT 0,
+                text_messages INTEGER DEFAULT 0,
+                media_messages INTEGER DEFAULT 0,
+                reply_messages INTEGER DEFAULT 0,
+                active_chats INTEGER DEFAULT 0
+            );
+            
+            CREATE TABLE IF NOT EXISTS hourly_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                hour INTEGER NOT NULL,
+                messages_count INTEGER DEFAULT 0,
+                UNIQUE(timestamp, hour)
+            );
+            
+            CREATE TABLE IF NOT EXISTS admin_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+            
             CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
             CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
             CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
