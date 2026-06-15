@@ -2,12 +2,14 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from config.settings import settings
 from database.user_repository import UserRepository
+from services.channel_service import ChannelService
 
 class StartHandler:
     """Handler for /start command"""
     
     def __init__(self):
         self.user_repo = UserRepository()
+        self.channel_service = ChannelService()
     
     async def handle(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
@@ -16,6 +18,29 @@ class StartHandler:
         if self.user_repo.is_banned(user.id):
             await update.message.reply_text("🚫 You are banned from using this bot.")
             return
+        
+        # Check channel membership FIRST (admins bypass)
+        if user.id not in settings.ADMIN_IDS:
+            all_joined, not_joined, _ = await self.channel_service.check_user_joined_channels(
+                context, user.id
+            )
+            
+            if not all_joined:
+                keyboard = self.channel_service.get_join_keyboard(not_joined)
+                channel_list = "\n".join([
+                    f"• {ch.get('channel_title', 'Channel')}"
+                    for ch in not_joined
+                ])
+                
+                await update.message.reply_text(
+                    f"⚠️ **You must join these channels to use the bot:**\n\n"
+                    f"{channel_list}\n\n"
+                    f"Click the buttons below to join each channel.\n"
+                    f"After joining ALL channels, click the **Verify** button.",
+                    reply_markup=keyboard,
+                    parse_mode='Markdown'
+                )
+                return
         
         # Collect user data
         username = user.username

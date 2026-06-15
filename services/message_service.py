@@ -1,13 +1,12 @@
 import json
-import sqlite3
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from database.connection import db
+from database.conversation_repository import ConversationRepository
 
 class MessageService:
     """Service for message operations"""
     
     def __init__(self):
-        self.db = db
+        self.conv_repo = ConversationRepository()
     
     def extract_media_info(self, message):
         """Extract media information from a message"""
@@ -43,6 +42,10 @@ class MessageService:
             media_data['duration'] = video.duration
             media_data['width'] = video.width
             media_data['height'] = video.height
+            media_data['media_info'] = {
+                "duration": video.duration, "width": video.width,
+                "height": video.height, "file_name": video.file_name
+            }
             
         elif message.voice:
             media_data['media_type'] = 'voice'
@@ -52,6 +55,9 @@ class MessageService:
             media_data['file_size'] = voice.file_size
             media_data['mime_type'] = voice.mime_type
             media_data['duration'] = voice.duration
+            media_data['media_info'] = {
+                "duration": voice.duration, "mime_type": voice.mime_type
+            }
             
         elif message.audio:
             media_data['media_type'] = 'audio'
@@ -61,6 +67,10 @@ class MessageService:
             media_data['file_size'] = audio.file_size
             media_data['mime_type'] = audio.mime_type
             media_data['duration'] = audio.duration
+            media_data['media_info'] = {
+                "duration": audio.duration, "title": audio.title,
+                "performer": audio.performer
+            }
             
         elif message.document:
             media_data['media_type'] = 'document'
@@ -69,6 +79,9 @@ class MessageService:
             media_data['file_unique_id'] = doc.file_unique_id
             media_data['file_size'] = doc.file_size
             media_data['mime_type'] = doc.mime_type
+            media_data['media_info'] = {
+                "file_name": doc.file_name, "mime_type": doc.mime_type
+            }
             
         elif message.sticker:
             media_data['media_type'] = 'sticker'
@@ -78,6 +91,9 @@ class MessageService:
             media_data['file_size'] = sticker.file_size
             media_data['width'] = sticker.width
             media_data['height'] = sticker.height
+            media_data['media_info'] = {
+                "emoji": sticker.emoji, "set_name": sticker.set_name
+            }
             
         elif message.animation:
             media_data['media_type'] = 'animation'
@@ -87,6 +103,9 @@ class MessageService:
             media_data['file_size'] = anim.file_size
             media_data['mime_type'] = anim.mime_type
             media_data['duration'] = anim.duration
+            media_data['media_info'] = {
+                "duration": anim.duration, "file_name": anim.file_name
+            }
             
         elif message.video_note:
             media_data['media_type'] = 'video_note'
@@ -95,6 +114,9 @@ class MessageService:
             media_data['file_unique_id'] = vn.file_unique_id
             media_data['file_size'] = vn.file_size
             media_data['duration'] = vn.duration
+            media_data['media_info'] = {
+                "duration": vn.duration, "length": vn.length
+            }
         
         return media_data if media_data['media_type'] else None
     
@@ -129,87 +151,69 @@ class MessageService:
             print(f"Error sending media: {e}")
             return False
     
-    def log_text_message(self, sender_id, receiver_id, content, is_reply=False):
-        """Log a text message"""
-        conn = self.db.get_connection()
-        conn.execute("""
-            INSERT INTO messages (sender_id, receiver_id, message_type, content, is_reply)
-            VALUES (?, ?, 'text', ?, ?)
-        """, (sender_id, receiver_id, content, int(is_reply)))
-        conn.commit()
-        conn.close()
+    def log_text_message(self, sender_id: int, receiver_id: int, content: str, is_reply: bool = False) -> int:
+        """Log a text message to the conversation"""
+        conversation_id = self.conv_repo.get_or_create(sender_id, receiver_id)
+        
+        message_id = self.conv_repo.add_message(
+            conversation_id=conversation_id,
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            message_type='text',
+            content=content,
+            is_reply=is_reply
+        )
+        
+        return message_id
     
-    def log_media_message(self, sender_id, receiver_id, media_data, is_reply=False):
-        """Log a media message"""
-        conn = self.db.get_connection()
-        conn.execute("""
-            INSERT INTO messages (
-                sender_id, receiver_id, message_type, content,
-                file_id, file_unique_id, file_size, mime_type,
-                duration, width, height, caption, media_info, is_reply
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            sender_id, receiver_id, media_data['media_type'],
-            media_data.get('caption'),
-            media_data.get('file_id'), media_data.get('file_unique_id'),
-            media_data.get('file_size'), media_data.get('mime_type'),
-            media_data.get('duration'), media_data.get('width'),
-            media_data.get('height'), media_data.get('caption'),
-            json.dumps(media_data.get('media_info', {})),
-            int(is_reply)
-        ))
-        conn.commit()
-        conn.close()
+    def log_media_message(self, sender_id: int, receiver_id: int, media_data: dict, is_reply: bool = False) -> int:
+        """Log a media message to the conversation"""
+        conversation_id = self.conv_repo.get_or_create(sender_id, receiver_id)
+        
+        message_id = self.conv_repo.add_message(
+            conversation_id=conversation_id,
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            message_type=media_data['media_type'],
+            content=media_data.get('caption'),
+            file_id=media_data.get('file_id'),
+            file_unique_id=media_data.get('file_unique_id'),
+            file_size=media_data.get('file_size'),
+            mime_type=media_data.get('mime_type'),
+            duration=media_data.get('duration'),
+            width=media_data.get('width'),
+            height=media_data.get('height'),
+            caption=media_data.get('caption'),
+            media_info=json.dumps(media_data.get('media_info', {})),
+            is_reply=is_reply
+        )
+        
+        return message_id
     
-    def get_stats(self):
+    def get_conversation_messages(self, user_a_id: int, user_b_id: int, limit: int = 100) -> list:
+        """Get all messages between two users"""
+        conversation_id = self.conv_repo.get_or_create(user_a_id, user_b_id)
+        return self.conv_repo.get_messages(conversation_id, limit)
+    
+    def get_user_conversations(self, user_id: int) -> list:
+        """Get all conversations for a user"""
+        return self.conv_repo.get_user_conversations(user_id)
+    
+    def get_stats(self) -> dict:
         """Get message statistics"""
-        conn = self.db.get_connection()
-        
-        stats = {}
-        stats['total_messages'] = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
-        stats['media_messages'] = conn.execute(
-            "SELECT COUNT(*) FROM messages WHERE message_type != 'text'"
-        ).fetchone()[0]
-        stats['reply_messages'] = conn.execute(
-            "SELECT COUNT(*) FROM messages WHERE is_reply = 1"
-        ).fetchone()[0]
-        stats['total_conversations'] = conn.execute(
-            "SELECT COUNT(DISTINCT conversation_id) FROM messages"
-        ).fetchone()[0]
-        
-        conn.close()
-        return stats
+        return self.conv_repo.get_stats()
     
-    def get_all_conversations(self):
+    def get_all_conversations(self) -> list:
         """Get all conversations with messages"""
-        conn = self.db.get_connection()
-        conn.row_factory = sqlite3.Row
+        conversations = self.conv_repo.get_all_conversations()
         
-        conversations = conn.execute("""
-            SELECT DISTINCT 
-                sender_id, receiver_id,
-                MIN(timestamp) as started_at,
-                MAX(timestamp) as last_message,
-                COUNT(*) as message_count
-            FROM messages
-            GROUP BY 
-                MIN(sender_id, receiver_id),
-                MAX(sender_id, receiver_id)
-            ORDER BY last_message DESC
-        """).fetchall()
-        
-        result = []
+        # Add messages to each conversation
         for conv in conversations:
-            conv_dict = dict(conv)
-            messages = conn.execute("""
-                SELECT * FROM messages 
-                WHERE (sender_id = ? AND receiver_id = ?) 
-                   OR (sender_id = ? AND receiver_id = ?)
-                ORDER BY timestamp ASC
-            """, (conv['sender_id'], conv['receiver_id'], 
-                  conv['receiver_id'], conv['sender_id'])).fetchall()
-            conv_dict['messages'] = [dict(msg) for msg in messages]
-            result.append(conv_dict)
+            conv['messages'] = self.conv_repo.get_messages(conv['id'])
         
-        conn.close()
-        return result
+        return conversations
+    
+    def end_conversation(self, user_a_id: int, user_b_id: int):
+        """End conversation between two users"""
+        conversation_id = self.conv_repo.get_or_create(user_a_id, user_b_id)
+        self.conv_repo.end_conversation(conversation_id)
